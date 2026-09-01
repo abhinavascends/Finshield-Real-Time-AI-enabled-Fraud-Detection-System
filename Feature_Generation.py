@@ -32,6 +32,15 @@ USER_BEHAVIOR_FEATURES = [
 def extract_user_behavior_features(df):
     return df[USER_BEHAVIOR_FEATURES].copy()
 
+TEMPORAL_FEATURES = [
+    "transaction_hour",
+    "transaction_day_of_week",
+]
+
+
+def extract_temporal_features(df):
+    return df[TEMPORAL_FEATURES].copy()
+
 if __name__ == "__main__":
     df = pd.read_csv(DATASET_PATH)
 
@@ -52,3 +61,14 @@ if __name__ == "__main__":
     print("\nUser behavior features:")
     print(user_behavior_features.head())
     print("\nUser behavior feature shape:", user_behavior_features.shape)
+    
+    df["TransactionDate"] = pd.to_datetime(df["TransactionDate"])
+
+    df["transaction_hour"] = df["TransactionDate"].dt.hour
+    df["transaction_day_of_week"] = df["TransactionDate"].dt.dayofweek
+
+    temporal_features = extract_temporal_features(df)
+
+    print("\nTransaction temporal features:")
+    print(temporal_features.head())
+    print("\nTemporal feature shape:", temporal_features.shape)
