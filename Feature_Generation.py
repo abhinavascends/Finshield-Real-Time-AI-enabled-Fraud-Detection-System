@@ -22,3 +22,27 @@ if __name__ == "__main__":
     print("Numerical transaction features:")
     print(numerical_features.head())
     print("\nFeature shape:", numerical_features.shape)
+    
+CATEGORICAL_FEATURES = [
+    "TransactionType",
+    "Channel",
+    "CustomerOccupation",
+    "Location",
+]
+def extract_categorical_features(df):
+    return df[CATEGORICAL_FEATURES].copy()
+
+if __name__ == "__main__":
+    df = pd.read_csv(DATASET_PATH)
+
+    numerical_features = extract_numerical_features(df)
+
+    print("Numerical transaction features:")
+    print(numerical_features.head())
+    print("\nFeature shape:", numerical_features.shape)
+
+    categorical_features = extract_categorical_features(df)
+
+    print("\nCategorical transaction features:")
+    print(categorical_features.head())
+    print("\nCategorical feature shape:", categorical_features.shape)
