@@ -1,0 +1,32 @@
+# Web API
+fastapi==0.142.2
+uvicorn==0.53.0
+pydantic==2.13.5
+python-dotenv==1.2.4
+
+# Authentication
+python-jose[cryptography]==3.5.0
+
+# Data & Machine Learning
+numpy==2.5.3
+pandas==3.0.6
+scikit-learn==1.9.1
+xgboost==3.4.1
+lightgbm==4.6.0
+catboost==1.2.10
+optuna==5.0.0
+joblib==1.6.0
+matplotlib==3.11.2
+
+# ONNX model conversion & inference
+onnx==1.23.0
+onnxmltools==1.16.0
+onnxruntime==1.30.0
+
+# Database & caching
+psycopg2-binary==2.9.13
+redis==8.1.0
+
+# Testing
+pytest==9.1.1
+httpx==0.28.1
