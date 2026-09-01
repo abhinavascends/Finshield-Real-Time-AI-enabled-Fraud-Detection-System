@@ -49,6 +49,29 @@ LOCATION_ANOMALY_FEATURES = [
 def extract_location_anomaly_features(df):
     return df[LOCATION_ANOMALY_FEATURES].copy()
 
+def generate_transaction_features(df):
+    numerical_features = extract_numerical_features(df)
+    categorical_features = extract_categorical_features(df)
+    user_behavior_features = extract_user_behavior_features(df)
+
+    df["TransactionDate"] = pd.to_datetime(df["TransactionDate"])
+    df["transaction_hour"] = df["TransactionDate"].dt.hour
+    df["transaction_day_of_week"] = df["TransactionDate"].dt.dayofweek
+
+    temporal_features = extract_temporal_features(df)
+    location_features = extract_location_anomaly_features(df)
+
+    return pd.concat(
+        [
+            numerical_features,
+            categorical_features,
+            user_behavior_features,
+            temporal_features,
+            location_features,
+        ],
+        axis=1,
+    )
+
 if __name__ == "__main__":
     df = pd.read_csv(DATASET_PATH)
 
@@ -89,3 +112,9 @@ if __name__ == "__main__":
         "\nLocation anomaly feature shape:",
         location_anomaly_features.shape
     )
+    
+    transaction_features = generate_transaction_features(df)
+
+    print("\nFinal transaction feature set:")
+    print(transaction_features.head())
+    print("\nFinal feature shape:", transaction_features.shape)
