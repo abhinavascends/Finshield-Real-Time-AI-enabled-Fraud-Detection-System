@@ -41,6 +41,14 @@ TEMPORAL_FEATURES = [
 def extract_temporal_features(df):
     return df[TEMPORAL_FEATURES].copy()
 
+LOCATION_ANOMALY_FEATURES = [
+    "is_unusual_location",
+]
+
+
+def extract_location_anomaly_features(df):
+    return df[LOCATION_ANOMALY_FEATURES].copy()
+
 if __name__ == "__main__":
     df = pd.read_csv(DATASET_PATH)
 
@@ -72,3 +80,12 @@ if __name__ == "__main__":
     print("\nTransaction temporal features:")
     print(temporal_features.head())
     print("\nTemporal feature shape:", temporal_features.shape)
+    
+    location_anomaly_features = extract_location_anomaly_features(df)
+
+    print("\nLocation anomaly features:")
+    print(location_anomaly_features.head())
+    print(
+        "\nLocation anomaly feature shape:",
+        location_anomaly_features.shape
+    )
