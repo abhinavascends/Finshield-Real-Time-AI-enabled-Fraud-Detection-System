@@ -1,6 +1,6 @@
 
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 DATASET_PATH = "bank_transactions_featured.csv"
 
@@ -79,6 +79,12 @@ def scale_numerical_features(numerical_features):
 
     return scaled_features, scaler
 
+def encode_categorical_features(categorical_features):
+    encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+    encoded_features = encoder.fit_transform(categorical_features)
+
+    return encoded_features, encoder
+
 if __name__ == "__main__":
     df = pd.read_csv(DATASET_PATH)
 
@@ -133,3 +139,14 @@ if __name__ == "__main__":
     print("\nScaled numerical features:")
     print(scaled_numerical_features[:5])
     print("\nScaled feature shape:", scaled_numerical_features.shape)
+    
+    encoded_categorical_features, encoder = encode_categorical_features(
+        categorical_features
+    )
+
+    print("\nEncoded categorical features:")
+    print(encoded_categorical_features[:5])
+    print(
+        "\nEncoded categorical feature shape:",
+        encoded_categorical_features.shape
+    )
