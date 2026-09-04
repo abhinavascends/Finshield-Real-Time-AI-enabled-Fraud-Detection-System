@@ -1,5 +1,5 @@
-
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 DATASET_PATH = "bank_transactions_featured.csv"
@@ -85,6 +85,17 @@ def encode_categorical_features(categorical_features):
 
     return encoded_features, encoder
 
+def combine_feature_representations(
+    scaled_numerical_features,
+    encoded_categorical_features
+):
+    return np.hstack(
+        [
+            scaled_numerical_features,
+            encoded_categorical_features,
+        ]
+    )
+
 if __name__ == "__main__":
     df = pd.read_csv(DATASET_PATH)
 
@@ -150,3 +161,12 @@ if __name__ == "__main__":
         "\nEncoded categorical feature shape:",
         encoded_categorical_features.shape
     )
+
+    combined_features = combine_feature_representations(
+        scaled_numerical_features,
+        encoded_categorical_features
+    )
+
+    print("\nCombined feature representation:")
+    print(combined_features[:5])
+    print("\nCombined feature shape:", combined_features.shape)
