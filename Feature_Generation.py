@@ -1,5 +1,6 @@
 
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
 DATASET_PATH = "bank_transactions_featured.csv"
 
@@ -71,6 +72,12 @@ def generate_transaction_features(df):
         ],
         axis=1,
     )
+    
+def scale_numerical_features(numerical_features):
+    scaler = StandardScaler()
+    scaled_features = scaler.fit_transform(numerical_features)
+
+    return scaled_features, scaler
 
 if __name__ == "__main__":
     df = pd.read_csv(DATASET_PATH)
@@ -118,3 +125,11 @@ if __name__ == "__main__":
     print("\nFinal transaction feature set:")
     print(transaction_features.head())
     print("\nFinal feature shape:", transaction_features.shape)
+    
+    scaled_numerical_features, scaler = scale_numerical_features(
+        numerical_features
+    )
+
+    print("\nScaled numerical features:")
+    print(scaled_numerical_features[:5])
+    print("\nScaled feature shape:", scaled_numerical_features.shape)
