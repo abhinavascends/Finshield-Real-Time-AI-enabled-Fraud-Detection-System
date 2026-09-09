@@ -2,10 +2,14 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.ensemble import IsolationForest
+import joblib
 
 DATASET_PATH = "bank_transactions_featured.csv"
 
 ANOMALY_CONTAMINATION = 0.05
+
+ISOLATION_FOREST_PATH = "model/isolation_forest_model.pkl"
+ENCODER_PATH = "model/categorical_encoder.pkl"
 
 NUMERICAL_FEATURES = [
     "TransactionAmount",
@@ -15,9 +19,9 @@ NUMERICAL_FEATURES = [
     "AccountBalance",
 ]
 
+
 def extract_numerical_features(df):
     return df[NUMERICAL_FEATURES].copy()
-
 
 
 CATEGORICAL_FEATURES = [
@@ -26,15 +30,21 @@ CATEGORICAL_FEATURES = [
     "CustomerOccupation",
     "Location",
 ]
+
+
 def extract_categorical_features(df):
     return df[CATEGORICAL_FEATURES].copy()
+
 
 USER_BEHAVIOR_FEATURES = [
     "user_transaction_count",
     "user_avg_transaction_amount",
 ]
+
+
 def extract_user_behavior_features(df):
     return df[USER_BEHAVIOR_FEATURES].copy()
+
 
 TEMPORAL_FEATURES = [
     "transaction_hour",
@@ -45,6 +55,7 @@ TEMPORAL_FEATURES = [
 def extract_temporal_features(df):
     return df[TEMPORAL_FEATURES].copy()
 
+
 LOCATION_ANOMALY_FEATURES = [
     "is_unusual_location",
 ]
@@ -52,6 +63,7 @@ LOCATION_ANOMALY_FEATURES = [
 
 def extract_location_anomaly_features(df):
     return df[LOCATION_ANOMALY_FEATURES].copy()
+
 
 def generate_transaction_features(df):
     numerical_features = extract_numerical_features(df)
@@ -75,18 +87,21 @@ def generate_transaction_features(df):
         ],
         axis=1,
     )
-    
+
+
 def scale_numerical_features(numerical_features):
     scaler = StandardScaler()
     scaled_features = scaler.fit_transform(numerical_features)
 
     return scaled_features, scaler
 
+
 def encode_categorical_features(categorical_features):
     encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
     encoded_features = encoder.fit_transform(categorical_features)
 
     return encoded_features, encoder
+
 
 def combine_feature_representations(
     scaled_numerical_features,
@@ -99,6 +114,7 @@ def combine_feature_representations(
         ]
     )
 
+
 def train_isolation_forest(combined_features):
     model = IsolationForest(
         n_estimators=100,
@@ -109,6 +125,12 @@ def train_isolation_forest(combined_features):
     model.fit(combined_features)
 
     return model
+
+
+def save_isolation_forest_artifacts(isolation_forest, encoder):
+    joblib.dump(isolation_forest, ISOLATION_FOREST_PATH)
+    joblib.dump(encoder, ENCODER_PATH)
+
 
 if __name__ == "__main__":
     df = pd.read_csv(DATASET_PATH)
@@ -124,13 +146,13 @@ if __name__ == "__main__":
     print("\nCategorical transaction features:")
     print(categorical_features.head())
     print("\nCategorical feature shape:", categorical_features.shape)
-    
+
     user_behavior_features = extract_user_behavior_features(df)
 
     print("\nUser behavior features:")
     print(user_behavior_features.head())
     print("\nUser behavior feature shape:", user_behavior_features.shape)
-    
+
     df["TransactionDate"] = pd.to_datetime(df["TransactionDate"])
 
     df["transaction_hour"] = df["TransactionDate"].dt.hour
@@ -141,7 +163,7 @@ if __name__ == "__main__":
     print("\nTransaction temporal features:")
     print(temporal_features.head())
     print("\nTemporal feature shape:", temporal_features.shape)
-    
+
     location_anomaly_features = extract_location_anomaly_features(df)
 
     print("\nLocation anomaly features:")
@@ -150,13 +172,13 @@ if __name__ == "__main__":
         "\nLocation anomaly feature shape:",
         location_anomaly_features.shape
     )
-    
+
     transaction_features = generate_transaction_features(df)
 
     print("\nFinal transaction feature set:")
     print(transaction_features.head())
     print("\nFinal feature shape:", transaction_features.shape)
-    
+
     scaled_numerical_features, scaler = scale_numerical_features(
         numerical_features
     )
@@ -164,7 +186,7 @@ if __name__ == "__main__":
     print("\nScaled numerical features:")
     print(scaled_numerical_features[:5])
     print("\nScaled feature shape:", scaled_numerical_features.shape)
-    
+
     encoded_categorical_features, encoder = encode_categorical_features(
         categorical_features
     )
@@ -190,4 +212,12 @@ if __name__ == "__main__":
     print("\nIsolation Forest baseline trained successfully.")
     print("\nConfigured anomaly contamination:", ANOMALY_CONTAMINATION)
     print("Isolation Forest threshold:", isolation_forest.offset_)
-    
+
+    save_isolation_forest_artifacts(
+        isolation_forest,
+        encoder
+    )
+
+    print("\nIsolation Forest artifacts saved successfully.")
+    print("Model:", ISOLATION_FOREST_PATH)
+    print("Encoder:", ENCODER_PATH)
