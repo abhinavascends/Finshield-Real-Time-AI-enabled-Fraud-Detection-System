@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import IsolationForest
 
 DATASET_PATH = "bank_transactions_featured.csv"
 
@@ -96,6 +97,16 @@ def combine_feature_representations(
         ]
     )
 
+def train_isolation_forest(combined_features):
+    model = IsolationForest(
+        n_estimators=100,
+        random_state=42
+    )
+
+    model.fit(combined_features)
+
+    return model
+
 if __name__ == "__main__":
     df = pd.read_csv(DATASET_PATH)
 
@@ -170,3 +181,7 @@ if __name__ == "__main__":
     print("\nCombined feature representation:")
     print(combined_features[:5])
     print("\nCombined feature shape:", combined_features.shape)
+
+    isolation_forest = train_isolation_forest(combined_features)
+
+    print("\nIsolation Forest baseline trained successfully.")
