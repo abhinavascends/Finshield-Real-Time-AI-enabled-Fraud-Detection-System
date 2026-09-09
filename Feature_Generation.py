@@ -5,6 +5,8 @@ from sklearn.ensemble import IsolationForest
 
 DATASET_PATH = "bank_transactions_featured.csv"
 
+ANOMALY_CONTAMINATION = 0.05
+
 NUMERICAL_FEATURES = [
     "TransactionAmount",
     "CustomerAge",
@@ -100,6 +102,7 @@ def combine_feature_representations(
 def train_isolation_forest(combined_features):
     model = IsolationForest(
         n_estimators=100,
+        contamination=ANOMALY_CONTAMINATION,
         random_state=42
     )
 
@@ -185,3 +188,6 @@ if __name__ == "__main__":
     isolation_forest = train_isolation_forest(combined_features)
 
     print("\nIsolation Forest baseline trained successfully.")
+    print("\nConfigured anomaly contamination:", ANOMALY_CONTAMINATION)
+    print("Isolation Forest threshold:", isolation_forest.offset_)
+    
