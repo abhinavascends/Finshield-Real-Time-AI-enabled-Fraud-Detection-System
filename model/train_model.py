@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
 from xgboost import XGBClassifier
 import joblib
 import os
@@ -139,6 +140,17 @@ joblib.dump(xgb, xgb_model_path)
 fraud_probabilities = xgb.predict_proba(X_test)[:, 1]
 
 
+# Generate classification predictions
+y_pred = xgb.predict(X_test)
+
+
+# Calculate classification metrics
+classification_metrics = classification_report(
+    y_test,
+    y_pred
+)
+
+
 if __name__ == "__main__":
     print("Supervised fraud labels generated successfully.")
 
@@ -164,3 +176,6 @@ if __name__ == "__main__":
 
     print("\nFraud probability predictions:")
     print(fraud_probabilities[:5])
+
+    print("\nClassification metrics:")
+    print(classification_metrics)
