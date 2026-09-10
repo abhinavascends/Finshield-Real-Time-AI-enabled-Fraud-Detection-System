@@ -135,6 +135,10 @@ xgb_model_path = os.path.join(
 joblib.dump(xgb, xgb_model_path)
 
 
+# Generate fraud probability predictions
+fraud_probabilities = xgb.predict_proba(X_test)[:, 1]
+
+
 if __name__ == "__main__":
     print("Supervised fraud labels generated successfully.")
 
@@ -157,3 +161,6 @@ if __name__ == "__main__":
 
     print("\nXGBoost fraud classifier trained successfully.")
     print("Model saved to:", xgb_model_path)
+
+    print("\nFraud probability predictions:")
+    print(fraud_probabilities[:5])
