@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.model_selection import train_test_split
 
 
 # Paths
@@ -91,11 +92,29 @@ df["is_fraud"] = (
 ).astype(int)
 
 
+# Prepare supervised training data
+y = df["is_fraud"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X_combined,
+    y,
+    test_size=0.3,
+    stratify=y,
+    random_state=42
+)
+
+
 if __name__ == "__main__":
     print("Supervised fraud labels generated successfully.")
 
     print("\nFraud label distribution:")
     print(df["is_fraud"].value_counts())
 
-    print("\nFraud label preview:")
-    print(df[["is_fraud"]].head())
+    print("\nTraining feature shape:", X_train.shape)
+    print("Testing feature shape:", X_test.shape)
+
+    print("\nTraining label distribution:")
+    print(y_train.value_counts())
+
+    print("\nTesting label distribution:")
+    print(y_test.value_counts())
