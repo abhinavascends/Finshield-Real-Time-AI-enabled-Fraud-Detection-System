@@ -104,6 +104,13 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 
+# Handle fraud class imbalance
+negative_samples = (y_train == 0).sum()
+positive_samples = (y_train == 1).sum()
+
+scale_pos_weight = negative_samples / positive_samples
+
+
 if __name__ == "__main__":
     print("Supervised fraud labels generated successfully.")
 
@@ -118,3 +125,8 @@ if __name__ == "__main__":
 
     print("\nTesting label distribution:")
     print(y_test.value_counts())
+
+    print("\nClass imbalance configuration:")
+    print("Negative samples:", negative_samples)
+    print("Positive samples:", positive_samples)
+    print("scale_pos_weight:", scale_pos_weight)
