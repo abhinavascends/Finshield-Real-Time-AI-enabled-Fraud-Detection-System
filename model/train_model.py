@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, roc_auc_score
 from xgboost import XGBClassifier
 import joblib
 import os
@@ -151,6 +151,13 @@ classification_metrics = classification_report(
 )
 
 
+# Calculate ROC-AUC
+roc_auc = roc_auc_score(
+    y_test,
+    fraud_probabilities
+)
+
+
 if __name__ == "__main__":
     print("Supervised fraud labels generated successfully.")
 
@@ -179,3 +186,5 @@ if __name__ == "__main__":
 
     print("\nClassification metrics:")
     print(classification_metrics)
+
+    print("\nROC-AUC:", roc_auc)
