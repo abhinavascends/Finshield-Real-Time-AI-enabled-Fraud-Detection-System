@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import train_test_split
+from xgboost import XGBClassifier
 
 
 # Paths
@@ -111,6 +112,15 @@ positive_samples = (y_train == 1).sum()
 scale_pos_weight = negative_samples / positive_samples
 
 
+# Train XGBoost fraud classifier
+xgb = XGBClassifier(
+    scale_pos_weight=scale_pos_weight,
+    random_state=42
+)
+
+xgb.fit(X_train, y_train)
+
+
 if __name__ == "__main__":
     print("Supervised fraud labels generated successfully.")
 
@@ -130,3 +140,5 @@ if __name__ == "__main__":
     print("Negative samples:", negative_samples)
     print("Positive samples:", positive_samples)
     print("scale_pos_weight:", scale_pos_weight)
+
+    print("\nXGBoost fraud classifier trained successfully.")
