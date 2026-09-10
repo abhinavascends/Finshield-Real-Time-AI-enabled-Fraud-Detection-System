@@ -4,10 +4,15 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
+import joblib
+import os
 
 
 # Paths
 DATA_PATH = "bank_transactions_featured.csv"
+OUTPUT_DIR = "model/artifacts"
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 # Load Dataset
@@ -121,6 +126,15 @@ xgb = XGBClassifier(
 xgb.fit(X_train, y_train)
 
 
+# Persist trained fraud classifier
+xgb_model_path = os.path.join(
+    OUTPUT_DIR,
+    "xgb_model.pkl"
+)
+
+joblib.dump(xgb, xgb_model_path)
+
+
 if __name__ == "__main__":
     print("Supervised fraud labels generated successfully.")
 
@@ -142,3 +156,4 @@ if __name__ == "__main__":
     print("scale_pos_weight:", scale_pos_weight)
 
     print("\nXGBoost fraud classifier trained successfully.")
+    print("Model saved to:", xgb_model_path)
