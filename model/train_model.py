@@ -16,6 +16,7 @@ OUTPUT_DIR = "model/artifacts"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+
 df = pd.read_csv(
     DATA_PATH,
     parse_dates=["TransactionDate", "PreviousTransactionDate"]
@@ -33,13 +34,23 @@ drop_cols = [
 
 X = df.drop(columns=drop_cols)
 
-numeric_cols = X.select_dtypes(include=[np.number]).columns.tolist()
+
+numeric_cols = X.select_dtypes(
+    include=[np.number]
+).columns.tolist()
 
 scaler = StandardScaler()
+
 X_numeric = pd.DataFrame(
     scaler.fit_transform(X[numeric_cols]),
     columns=numeric_cols
 )
+
+joblib.dump(
+    scaler,
+    os.path.join(OUTPUT_DIR, "scaler.pkl")
+)
+
 
 cat_cols = [
     "TransactionType",
@@ -59,7 +70,17 @@ X_cat = pd.DataFrame(
     columns=encoder.get_feature_names_out(cat_cols)
 )
 
-X_combined = pd.concat([X_numeric, X_cat], axis=1)
+joblib.dump(
+    encoder,
+    os.path.join(OUTPUT_DIR, "onehot_encoder.pkl")
+)
+
+
+X_combined = pd.concat(
+    [X_numeric, X_cat],
+    axis=1
+)
+
 
 iso = IsolationForest(
     n_estimators=100,
@@ -72,7 +93,11 @@ iso.fit(X_combined)
 scores = -iso.decision_function(X_combined)
 
 threshold = np.percentile(scores, 95)
-df["is_fraud"] = (scores >= threshold).astype(int)
+
+df["is_fraud"] = (
+    scores >= threshold
+).astype(int)
+
 
 y = df["is_fraud"]
 
@@ -84,36 +109,59 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42
 )
 
+
 negative_samples = (y_train == 0).sum()
 positive_samples = (y_train == 1).sum()
 
-scale_pos_weight = negative_samples / positive_samples
+scale_pos_weight = (
+    negative_samples / positive_samples
+)
+
 
 xgb = XGBClassifier(
     scale_pos_weight=scale_pos_weight,
     random_state=42
 )
 
-xgb.fit(X_train, y_train)
+xgb.fit(
+    X_train,
+    y_train
+)
+
 
 xgb_model_path = os.path.join(
     OUTPUT_DIR,
     "xgb_model.pkl"
 )
 
-joblib.dump(xgb, xgb_model_path)
+joblib.dump(
+    xgb,
+    xgb_model_path
+)
 
-fraud_probabilities = xgb.predict_proba(X_test)[:, 1]
-y_pred = xgb.predict(X_test)
+
+fraud_probabilities = xgb.predict_proba(
+    X_test
+)[:, 1]
+
+y_pred = xgb.predict(
+    X_test
+)
+
 
 classification_metrics = str(
-    classification_report(y_test, y_pred)
+    classification_report(
+        y_test,
+        y_pred
+    )
 )
+
 
 roc_auc = roc_auc_score(
     y_test,
     fraud_probabilities
 )
+
 
 report_path = os.path.join(
     OUTPUT_DIR,
@@ -122,7 +170,10 @@ report_path = os.path.join(
 
 with open(report_path, "w") as f:
     f.write(classification_metrics)
-    f.write(f"\nROC-AUC: {roc_auc:.4f}\n")
+    f.write(
+        f"\nROC-AUC: {roc_auc:.4f}\n"
+    )
+
 
 fpr, tpr, _ = roc_curve(
     y_test,
@@ -140,12 +191,16 @@ plt.ylabel("True Positive Rate")
 plt.title("Fraud Detection ROC Curve")
 plt.legend()
 
+
 roc_curve_path = os.path.join(
     OUTPUT_DIR,
     "roc_curve.png"
 )
 
-plt.savefig(roc_curve_path)
+plt.savefig(
+    roc_curve_path
+)
+
 plt.close()
 
 
@@ -156,7 +211,10 @@ if __name__ == "__main__":
     print("\nTraining shape:", X_train.shape)
     print("Testing shape:", X_test.shape)
 
-    print("\nscale_pos_weight:", scale_pos_weight)
+    print(
+        "\nscale_pos_weight:",
+        scale_pos_weight
+    )
 
     print("\nClassification metrics:")
     print(classification_metrics)
@@ -165,3 +223,17 @@ if __name__ == "__main__":
 
     print("\nSaved:", report_path)
     print("Saved:", roc_curve_path)
+    print(
+        "Saved:",
+        os.path.join(
+            OUTPUT_DIR,
+            "scaler.pkl"
+        )
+    )
+    print(
+        "Saved:",
+        os.path.join(
+            OUTPUT_DIR,
+            "onehot_encoder.pkl"
+        )
+    )
