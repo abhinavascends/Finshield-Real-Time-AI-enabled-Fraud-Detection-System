@@ -4,6 +4,7 @@ import onnxruntime as ort
 
 from fastapi import FastAPI
 
+from app.db import save_transaction
 from app.schemas import TransactionRequest
 
 
@@ -38,8 +39,13 @@ def health_check():
 def ingest_transaction(
     transaction: TransactionRequest
 ):
+    transaction_id = save_transaction(
+        transaction
+    )
+
     return {
         "message": "Transaction ingested successfully",
+        "transaction_id": transaction_id,
         "data": transaction.model_dump()
     }
 
