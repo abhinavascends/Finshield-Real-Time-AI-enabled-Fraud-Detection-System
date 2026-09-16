@@ -1,15 +1,31 @@
 import os
 
 import psycopg2
+import redis
 from dotenv import load_dotenv
 
 
-load_dotenv("app/.env")
+ENV_PATH = os.path.join(
+    os.path.dirname(__file__),
+    ".env"
+)
+
+load_dotenv(ENV_PATH)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+REDIS_URL = os.getenv(
+    "REDIS_URL",
+    "redis://localhost:6379/0"
+)
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL environment variable is not set")
+
+
+redis_client = redis.Redis.from_url(
+    REDIS_URL,
+    decode_responses=True
+)
 
 
 def save_transaction(transaction):
@@ -75,7 +91,9 @@ def save_transaction(transaction):
         result = cursor.fetchone()
 
         if result is None:
-            raise RuntimeError("Failed to retrieve the inserted transaction ID")
+            raise RuntimeError(
+                "Failed to retrieve the inserted transaction ID"
+            )
 
         transaction_id = result[0]
 
@@ -85,3 +103,37 @@ def save_transaction(transaction):
 
     finally:
         connection.close()
+
+
+def create_alert(transaction_id, score):
+    connection = psycopg2.connect(DATABASE_URL)
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO alerts (
+                transaction_id,
+                alert_type
+            )
+            VALUES (%s, %s)
+            """,
+            (
+                transaction_id,
+                "HIGH_RISK"
+            )
+        )
+
+        connection.commit()
+
+    finally:
+        connection.close()
+
+    redis_client.xadd(
+        "alerts",
+        {
+            "transaction_id": str(transaction_id),
+            "score": str(score)
+        }
+    )
