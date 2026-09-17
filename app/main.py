@@ -2,8 +2,14 @@ import joblib
 import numpy as np
 import onnxruntime as ort
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
+from app.auth import (
+    LoginRequest,
+    authenticate_user,
+    create_token,
+    get_current_user
+)
 from app.db import save_transaction
 from app.schemas import TransactionRequest
 
@@ -35,9 +41,43 @@ def health_check():
     }
 
 
+@app.post("/token")
+def login(request: LoginRequest):
+    if not authenticate_user(
+        request.username,
+        request.password
+    ):
+        from fastapi import HTTPException, status
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password"
+        )
+
+    token = create_token(
+        {
+            "sub": request.username
+        }
+    )
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
+
+@app.get("/protected")
+def protected_route(
+    current_user: str = Depends(get_current_user)
+):
+    return {
+        "message": "Authentication successful",
+        "user": current_user
+    }
+    
 @app.post("/transactions/ingest")
 def ingest_transaction(
-    transaction: TransactionRequest
+    transaction: TransactionRequest,
+    current_user: str = Depends(get_current_user)
 ):
     transaction_id = save_transaction(
         transaction
@@ -46,13 +86,15 @@ def ingest_transaction(
     return {
         "message": "Transaction ingested successfully",
         "transaction_id": transaction_id,
+        "user": current_user,
         "data": transaction.model_dump()
     }
 
 
 @app.post("/transactions/score")
 def score_transaction(
-    transaction: TransactionRequest
+    transaction: TransactionRequest,
+    current_user: str = Depends(get_current_user)
 ):
     numerical_features = np.array([
         [
@@ -116,5 +158,6 @@ def score_transaction(
 
     return {
         "fraud_probability": fraud_probability,
-        "is_fraud": is_fraud
+        "is_fraud": is_fraud,
+        "user": current_user
     }
