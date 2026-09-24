@@ -1,5 +1,4 @@
 import os
-import secrets
 from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
@@ -9,18 +8,14 @@ from jose import JWTError, jwt
 from pydantic import BaseModel
 
 
-ENV_PATH = os.path.join(
-    os.path.dirname(__file__),
-    ".env"
-)
+load_dotenv("app/.env")
 
-load_dotenv(ENV_PATH)
-
-SECRET = os.getenv("JWT_SECRET")
+SECRET: str = os.getenv("JWT_SECRET") or ""
+USERNAME = os.getenv("AUTH_USERNAME")
+PASSWORD = os.getenv("AUTH_PASSWORD")
 
 if not SECRET:
     raise RuntimeError("JWT_SECRET environment variable is not set")
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -31,30 +26,15 @@ class LoginRequest(BaseModel):
 
 
 def authenticate_user(username: str, password: str):
-    expected_username = os.getenv("AUTH_USERNAME")
-    expected_password = os.getenv("AUTH_PASSWORD")
+    if username == USERNAME and password == PASSWORD:
+        return username
 
-    if not expected_username or not expected_password:
-        raise RuntimeError(
-            "Authentication credentials are not configured"
-        )
-
-    if (
-        secrets.compare_digest(username, expected_username)
-        and secrets.compare_digest(password, expected_password)
-    ):
-        return True
-
-    return False
+    return None
 
 
 def create_token(data: dict):
     to_encode = data.copy()
-
-    to_encode["exp"] = (
-        datetime.now(timezone.utc)
-        + timedelta(hours=2)
-    )
+    to_encode["exp"] = datetime.now(timezone.utc) + timedelta(hours=2)
 
     return jwt.encode(
         to_encode,
@@ -75,7 +55,7 @@ def get_current_user(
 
         username = payload.get("sub")
 
-        if username is None:
+        if not username:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials"

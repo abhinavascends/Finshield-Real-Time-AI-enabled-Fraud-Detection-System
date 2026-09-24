@@ -19,7 +19,9 @@ REDIS_URL = os.getenv(
 )
 
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL environment variable is not set")
+    raise RuntimeError(
+        "DATABASE_URL environment variable is not set"
+    )
 
 
 redis_client = redis.Redis.from_url(
@@ -28,12 +30,11 @@ redis_client = redis.Redis.from_url(
 )
 
 
-def save_transaction(transaction):
+def save_transaction(transaction, fraud_probability=None, is_fraud=None):
     connection = psycopg2.connect(DATABASE_URL)
 
     try:
         cursor = connection.cursor()
-
         cursor.execute(
             """
             INSERT INTO transactions (
@@ -55,13 +56,15 @@ def save_transaction(transaction):
                 channel,
                 customer_occupation,
                 user_primary_location,
-                is_unusual_location
+                is_unusual_location,
+                fraud_probability,
+                is_fraud
             )
             VALUES (
                 %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s,
-                %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s
             )
             RETURNING id
             """,
@@ -84,21 +87,18 @@ def save_transaction(transaction):
                 transaction.Channel,
                 transaction.CustomerOccupation,
                 transaction.user_primary_location,
-                transaction.is_unusual_location
+                transaction.is_unusual_location,
+                fraud_probability,
+                is_fraud
             )
         )
 
         result = cursor.fetchone()
-
         if result is None:
-            raise RuntimeError(
-                "Failed to retrieve the inserted transaction ID"
-            )
+            raise RuntimeError("Failed to retrieve transaction ID")
 
         transaction_id = result[0]
-
         connection.commit()
-
         return transaction_id
 
     finally:
@@ -137,3 +137,85 @@ def create_alert(transaction_id, score):
             "score": str(score)
         }
     )
+
+
+def get_transaction_history(limit=50):
+    connection = psycopg2.connect(DATABASE_URL)
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                account_id,
+                transaction_amount,
+                location,
+                event_time,
+                fraud_probability,
+                is_fraud
+            FROM transactions
+            ORDER BY event_time DESC
+            LIMIT %s
+            """,
+            (limit,)
+        )
+
+        rows = cursor.fetchall()
+
+        return [
+            {
+                "id": row[0],
+                "account_id": row[1],
+                "amount": row[2],
+                "location": row[3],
+                "event_time": row[4].isoformat()
+                if row[4]
+                else None,
+                "fraud_probability": row[5],
+                "is_fraud": row[6]
+            }
+            for row in rows
+        ]
+
+    finally:
+        connection.close()
+
+
+def get_alerts(limit=20):
+    connection = psycopg2.connect(DATABASE_URL)
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                transaction_id,
+                alert_type,
+                created_at
+            FROM alerts
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (limit,)
+        )
+
+        rows = cursor.fetchall()
+
+        return [
+            {
+                "id": row[0],
+                "transaction_id": row[1],
+                "type": row[2],
+                "time": row[3].isoformat()
+                if row[3]
+                else None
+            }
+            for row in rows
+        ]
+
+    finally:
+        connection.close()
